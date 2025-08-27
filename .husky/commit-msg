@@ -1,0 +1,1 @@
+cd performance && npx --no -- commitlint --edit ${1}
