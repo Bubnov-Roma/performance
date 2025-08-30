@@ -10,7 +10,7 @@ function ensureResource() {
   return datasetResource;
 }
 
-export function useDataset(): Dataset {
+function useDataset(): Dataset {
   return ensureResource().read();
 }
 

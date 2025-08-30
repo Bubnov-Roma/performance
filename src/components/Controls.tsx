@@ -4,10 +4,10 @@ import type { SortKey } from '../types';
 interface ControlsProps {
   search: string;
   onSearch: (v: string) => void;
+  onSearchSubmit: () => void;
   year: number;
   onYear: (y: number) => void;
-  minYear: number;
-  maxYear: number;
+  years: number[];
   sortBy: SortKey;
   onSort: (s: SortKey) => void;
   region: string;
@@ -18,10 +18,10 @@ interface ControlsProps {
 function ControlsImpl({
   search,
   onSearch,
+  onSearchSubmit,
   year,
   onYear,
-  minYear,
-  maxYear,
+  years,
   sortBy,
   onSort,
   region,
@@ -33,7 +33,7 @@ function ControlsImpl({
     [onSearch]
   );
   const onYearChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => onYear(Number(e.target.value)),
+    (e: React.ChangeEvent<HTMLSelectElement>) => onYear(Number(e.target.value)),
     [onYear]
   );
   const onSortChange = useCallback(
@@ -48,25 +48,46 @@ function ControlsImpl({
 
   return (
     <section className="mt-4 grid gap-3 md:grid-cols-4">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 relative">
         <input
           value={search}
           onChange={onInput}
           placeholder="Search country…"
           className="w-full px-3 py-2 rounded-xl border shadow"
         />
+        <button
+          onClick={onSearchSubmit}
+          className="rounded-xl absolute right-[10px] top-1/2 -translate-y-1/2 border-none bg-transparent text-link cursor-pointer p-1 flex items-center justify-center transition duration-200 ease-in-out"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="w-4 h-4"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+        </button>
       </div>
       <div className="flex items-center gap-2">
-        <label className="text-sm text-gray-600">Year</label>
-        <input
-          type="range"
-          min={minYear}
-          max={maxYear}
+        <select
           value={year}
           onChange={onYearChange}
-          className="w-full"
-        />
-        <span className="w-16 text-right tabular-nums">{year}</span>
+          className="w-full px-3 py-2 rounded-xl border shadow max-h-60 overflow-y-auto"
+        >
+          {years.map((y) => (
+            <option key={y} value={y}>
+              {y}
+            </option>
+          ))}
+        </select>
       </div>
       <div>
         <select

@@ -30,10 +30,10 @@ function ColumnSelectorModalImpl({
 
   return (
     <div
-      className="fixed inset-0 bg-black/40 flex items-center justify-center p-4"
+      className="fixed inset-0 bg-black/30 flex items-center justify-center p-4"
       onClick={onBackdrop}
     >
-      <div className="backdrop-blur-xl rounded-2xl shadow-xl w-full max-w-xl p-4">
+      <div className="backdrop-blur-md rounded-2xl bg-white/30 shadow-xl w-full max-w-xl p-4">
         <header className="flex items-center justify-between">
           <h3 className="font-semibold text-lg">Select additional columns</h3>
           <button onClick={onClose} className="px-2 py-1 rounded-lg border">
@@ -44,7 +44,7 @@ function ColumnSelectorModalImpl({
           {available.map((c) => (
             <label
               key={c.key}
-              className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-gray-50"
+              className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-gray-10"
             >
               <input
                 type="checkbox"

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { ColumnSpec, CountryEntry, SortKey, YearRow } from '../types';
+import { useDataWorker } from './useDataWorker';
 
 export interface AppState {
   search: string;
@@ -16,6 +17,9 @@ export interface AppState {
   regions: string[];
   minYear: number;
   maxYear: number;
+  years: number[];
+  loading: boolean;
+  runWorker: () => void;
 }
 
 function extractRegionFromRow(r: YearRow): string | undefined {
@@ -28,20 +32,20 @@ function extractRegionFromRow(r: YearRow): string | undefined {
 }
 
 export function useAppState(all: CountryEntry[]): AppState {
-  const { minYear, maxYear } = useMemo(() => {
-    let min = Number.POSITIVE_INFINITY;
-    let max = Number.NEGATIVE_INFINITY;
+  const { minYear, maxYear, years } = useMemo(() => {
+    const yearSet = new Set<number>();
+    let min = Infinity;
+    let max = -Infinity;
     for (const c of all) {
       for (const r of c.data) {
         if (typeof r.year === 'number') {
+          yearSet.add(r.year);
           if (r.year < min) min = r.year;
           if (r.year > max) max = r.year;
         }
       }
     }
-    if (!Number.isFinite(min)) min = 1900;
-    if (!Number.isFinite(max)) max = 2020;
-    return { minYear: min, maxYear: max };
+    return { minYear: min, maxYear: max, years: Array.from(yearSet).sort() };
   }, [all]);
 
   const [search, setSearch] = useState('');
@@ -73,27 +77,13 @@ export function useAppState(all: CountryEntry[]): AppState {
     return Array.from(s).sort();
   }, [all, year]);
 
-  const visibleCountries = useMemo(() => {
-    const needle = search.trim().toLowerCase();
-    const filtered = all.filter((c) => {
-      const byRegion =
-        region === 'All' ||
-        c.data.some((r) => extractRegionFromRow(r) === region);
-      const byName =
-        needle.length === 0 || c.name.toLowerCase().includes(needle);
-      return byRegion && byName;
-    });
+  const {
+    result: rawCountries,
+    loading,
+    runWorker,
+  } = useDataWorker(all, search, region, sortBy, year);
 
-    if (sortBy === 'name') {
-      return [...filtered].sort((a, b) => a.name.localeCompare(b.name));
-    }
-
-    return [...filtered].sort((a, b) => {
-      const pa = a.data.find((r) => r.year === year)?.population ?? 0;
-      const pb = b.data.find((r) => r.year === year)?.population ?? 0;
-      return pb - pa;
-    });
-  }, [all, search, region, sortBy, year]);
+  const visibleCountries = useMemo(() => rawCountries, [rawCountries]);
 
   return {
     search,
@@ -110,5 +100,8 @@ export function useAppState(all: CountryEntry[]): AppState {
     regions,
     minYear,
     maxYear,
+    years,
+    loading,
+    runWorker,
   };
 }

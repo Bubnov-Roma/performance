@@ -1,4 +1,4 @@
-import { memo, useMemo } from 'react';
+import { memo, useMemo, useEffect, useState } from 'react';
 import type { ColumnSpec, CountryEntry, YearRow } from '../types';
 import { CountryTable } from './CountryTable';
 
@@ -13,6 +13,17 @@ function CountryCardImpl({ country, selectedCols, highlightYear }: Props) {
     () => country.data.find((r) => r.year === highlightYear),
     [country.data, highlightYear]
   );
+
+  const [flash, setFlash] = useState(false);
+
+  useEffect(() => {
+    if (latestRow) {
+      setFlash(true);
+      const timeout = setTimeout(() => setFlash(false), 1000);
+      return () => clearTimeout(timeout);
+    }
+  }, [latestRow]);
+
   return (
     <article className="bg-[var(--card)] rounded-2xl border shadow p-4">
       <header className="flex items-baseline justify-between gap-2">
@@ -26,13 +37,13 @@ function CountryCardImpl({ country, selectedCols, highlightYear }: Props) {
       <dl className="mt-1 grid grid-cols-3 gap-2 text-sm">
         <div className="col-span-2">
           <dt className="text-[var(--muted)]">Population</dt>
-          <dd className={`tabular-nums ${latestRow ? 'animate-flash' : ''}`}>
+          <dd className={`tabular-nums ${flash ? 'animate-flash' : ''}`}>
             {latestRow?.population ?? 'N/A'}
           </dd>
         </div>
         <div>
           <dt className="text-[var(--muted)]">Year</dt>
-          <dd className={`tabular-nums ${latestRow ? 'animate-flash' : ''}`}>
+          <dd className={`tabular-nums ${flash ? 'animate-flash' : ''}`}>
             {latestRow?.year ?? '—'}
           </dd>
         </div>

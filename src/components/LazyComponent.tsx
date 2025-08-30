@@ -59,12 +59,12 @@ export default function LazyComponent() {
         <div className="flex gap-2">
           <button
             onClick={openColumns}
-            className="px-3 py-2 rounded-xl border shadow hover:bg-gray-50"
+            className="px-3 py-2 rounded-xl border shadow hover:bg-gray-70"
           >
             Select Columns
           </button>
           <a
-            className="px-3 py-2 rounded-xl border  shadow hover:bg-gray-50"
+            className="px-3 py-2 rounded-xl border  shadow hover:bg-gray-70"
             href="https://github.com/owid/co2-data"
             target="_blank"
             rel="noreferrer"
@@ -77,16 +77,22 @@ export default function LazyComponent() {
       <Controls
         search={app.search}
         onSearch={app.setSearch}
+        onSearchSubmit={app.runWorker}
         year={app.year}
         onYear={app.setYear}
-        minYear={app.minYear}
-        maxYear={app.maxYear}
+        years={app.years}
         sortBy={app.sortBy}
         onSort={app.setSortBy}
         region={app.region}
         onRegion={app.setRegion}
         regions={app.regions}
       />
+
+      {app.loading && (
+        <div className="h-1 w-full bg-gray-200 rounded-full overflow-hidden my-2">
+          <div className="h-full w-full bg-blue-500 animate-progress" />
+        </div>
+      )}
 
       <CountryList
         countries={app.visibleCountries}
