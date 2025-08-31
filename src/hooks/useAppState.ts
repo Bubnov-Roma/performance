@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import type { ColumnSpec, CountryEntry, SortKey, YearRow } from '../types';
+import type { ColumnSpec, CountryEntry, SortKey } from '../types';
 import { useDataWorker } from './useDataWorker';
 
 export interface AppState {
@@ -9,26 +9,18 @@ export interface AppState {
   setYear: (y: number) => void;
   sortBy: SortKey;
   setSortBy: (s: SortKey) => void;
-  region: string;
-  setRegion: (r: string) => void;
+  regionsSelected: string[];
+  setRegionsSelected: (r: string[]) => void;
+  regions: string[];
+  regionLabel: string;
   selectedCols: ColumnSpec[];
   setSelectedCols: (cols: ColumnSpec[]) => void;
   visibleCountries: CountryEntry[];
-  regions: string[];
   minYear: number;
   maxYear: number;
   years: number[];
   loading: boolean;
   runWorker: () => void;
-}
-
-function extractRegionFromRow(r: YearRow): string | undefined {
-  const tryKeys = ['continent', 'region', 'world_6region'];
-  for (const k of tryKeys) {
-    const v = r[k];
-    if (typeof v === 'string' && v.trim().length > 0) return v;
-  }
-  return undefined;
 }
 
 export function useAppState(all: CountryEntry[]): AppState {
@@ -51,7 +43,7 @@ export function useAppState(all: CountryEntry[]): AppState {
   const [search, setSearch] = useState('');
   const [year, setYear] = useState<number>(maxYear);
   const [sortBy, setSortBy] = useState<SortKey>('name');
-  const [region, setRegion] = useState<string>('All');
+  const [regionsSelected, setRegionsSelected] = useState<string[]>(['All']);
   const [selectedCols, setSelectedCols] = useState<ColumnSpec[]>([
     { key: 'year', label: 'Year' },
     { key: 'population', label: 'Population' },
@@ -62,26 +54,29 @@ export function useAppState(all: CountryEntry[]): AppState {
   const regions = useMemo(() => {
     const s = new Set<string>(['All']);
     for (const c of all) {
-      let best: YearRow | undefined;
-      let bestDelta = Number.POSITIVE_INFINITY;
-      for (const r of c.data) {
-        const d = Math.abs(r.year - year);
-        if (d < bestDelta) {
-          best = r;
-          bestDelta = d;
-        }
-      }
-      const reg = best ? extractRegionFromRow(best) : undefined;
-      if (reg) s.add(reg);
+      if (!c.iso) s.add(c.name);
     }
     return Array.from(s).sort();
-  }, [all, year]);
+  }, [all]);
+
+  const regionLabel = useMemo(() => {
+    if (regionsSelected.length === 0 || regionsSelected.includes('All')) {
+      const rest = regionsSelected.filter((r) => r !== 'All');
+      return rest.length ? `All + ${rest.join(' + ')}` : 'All Regions';
+    }
+    if (regionsSelected.length === 1) return regionsSelected[0];
+    if (regionsSelected.length === 2)
+      return `${regionsSelected[0]} + ${regionsSelected[1]}`;
+    return `${regionsSelected[0]} + ${regionsSelected[1]} + ${
+      regionsSelected.length - 2
+    } more`;
+  }, [regionsSelected]);
 
   const {
     result: filteredCountries,
     loading,
     runWorker,
-  } = useDataWorker(all, search, region);
+  } = useDataWorker(all, search, regionsSelected);
 
   const visibleCountries = useMemo(() => {
     const arr = [...filteredCountries];
@@ -114,12 +109,13 @@ export function useAppState(all: CountryEntry[]): AppState {
     setYear,
     sortBy,
     setSortBy,
-    region,
-    setRegion,
+    regionsSelected,
+    setRegionsSelected,
+    regions,
+    regionLabel,
     selectedCols,
     setSelectedCols,
     visibleCountries,
-    regions,
     minYear,
     maxYear,
     years,

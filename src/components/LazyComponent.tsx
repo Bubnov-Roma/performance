@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { useCountries } from '../hooks/useCountries';
 import { useAppState } from '../hooks/useAppState';
 import type { ColumnSpec } from '../types';
@@ -6,7 +6,7 @@ import { CountryList } from '../components/CountryList';
 import { ColumnSelectorModal } from '../components/ColumnSelectorModal';
 import { Controls } from '../components/Controls';
 
-export default function LazyComponent() {
+function LazyComponentImpl() {
   const allCountries = useCountries();
   const app = useAppState(allCountries);
 
@@ -83,9 +83,10 @@ export default function LazyComponent() {
         years={app.years}
         sortBy={app.sortBy}
         onSort={app.setSortBy}
-        region={app.region}
-        onRegion={app.setRegion}
         regions={app.regions}
+        regionsSelected={app.regionsSelected}
+        onRegionsChange={app.setRegionsSelected}
+        regionLabel={app.regionLabel}
       />
 
       {app.loading && (
@@ -110,3 +111,7 @@ export default function LazyComponent() {
     </div>
   );
 }
+
+const LazyComponent = memo(LazyComponentImpl);
+
+export default LazyComponent;

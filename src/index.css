@@ -25,7 +25,7 @@ a {
 }
 
 a:hover {
-  border-color: #646cff;
+  border-color: #bcbcbc;
 }
 
 label {
@@ -63,7 +63,7 @@ button {
 }
 
 button:hover {
-  border-color: #646cff;
+  border-color: #8e8e8e;
 }
 
 button:focus,

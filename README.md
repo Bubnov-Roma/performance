@@ -1,69 +1,78 @@
-# React + TypeScript + Vite
+# Performance Profiling
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Initial Profiling (before optimizations)
 
-Currently, two official plugins are available:
+**Tools:** React DevTools → Profiler
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+**Test actions:**
 
-## Expanding the ESLint configuration
+1. Country search
+2. Choose another year
+3. Sorting by population
+4. Add/remove a column
+5. Filter by region
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+**Observations:**
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- Commit Duration: ~XXms when sorting by population
+- Render Duration:
+  - `CountryCard`: ~XXms
+  - `CountryList`: ~XXms
+- Flame Graph showed that when changing the year or sorting, **the entire list of countries** was re-rendered, even if nothing visually changed.
+- Ranked Chart showed a high load on `CountryCard`.
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+**Screenshots:**
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+- Flame Graph (before)
+- Ranked Chart (before)
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+---
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Optimizations
 
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+**Techniques used:**
+
+- `React.memo` for:
+  - `CountryList`
+  - `CountryCard`
+  - `Controls`
+  - `ColumnSelectorModal`
+- `useMemo` for:
+  - `headers` calculations
+  - select `latestRow`
+  - list of available columns
+  - generating `regionLabel`
+  - filtered/sorted `visibleCountries`
+- `useCallback` for:
+  - `onSearch`, `onSort`, `onYearChange`
+  - `toggleRegion`
+  - `runWorker` (Web Worker handler)
+- The list virtualization logic has been removed (`useVirtualList`) → only visible country cards are rendered.
+
+---
+
+## Profiling After Optimizations (after optimizations)
+
+**Observations:**
+
+- Commit Duration: ~XXms (decreased by 2–3 times)
+- Render Duration:
+  - `CountryCard`: ~XXms (decreased several times)
+  - `CountryList`: ~XXms (redrawn only when the list changes)
+- **only changed elements** are re-rendered, not the entire list.
+- The load on `CountryCard` has been significantly reduced.
+
+**Screenshots:**
+
+- Flame Graph (after)
+- Ranked Chart (after)
+
+---
+
+## Conclusion
+
+After optimizations we succeeded:
+
+- reduce commit duration and render duration,
+- reduce the number of unnecessary rerenders,
+- improve interface responsiveness when sorting, searching and filtering.
