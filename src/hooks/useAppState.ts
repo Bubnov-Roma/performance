@@ -78,12 +78,34 @@ export function useAppState(all: CountryEntry[]): AppState {
   }, [all, year]);
 
   const {
-    result: rawCountries,
+    result: filteredCountries,
     loading,
     runWorker,
-  } = useDataWorker(all, search, region, sortBy, year);
+  } = useDataWorker(all, search, region);
 
-  const visibleCountries = useMemo(() => rawCountries, [rawCountries]);
+  const visibleCountries = useMemo(() => {
+    const arr = [...filteredCountries];
+    switch (sortBy) {
+      case 'name':
+        return arr.sort((a, b) => a.name.localeCompare(b.name));
+      case 'name_desc':
+        return arr.sort((a, b) => b.name.localeCompare(a.name));
+      case 'population':
+        return arr.sort(
+          (a, b) =>
+            (b.data.find((r) => r.year === year)?.population ?? 0) -
+            (a.data.find((r) => r.year === year)?.population ?? 0)
+        );
+      case 'population_asc':
+        return arr.sort(
+          (a, b) =>
+            (a.data.find((r) => r.year === year)?.population ?? 0) -
+            (b.data.find((r) => r.year === year)?.population ?? 0)
+        );
+      default:
+        return arr;
+    }
+  }, [filteredCountries, sortBy, year]);
 
   return {
     search,

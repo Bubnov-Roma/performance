@@ -90,7 +90,7 @@ export default function LazyComponent() {
 
       {app.loading && (
         <div className="h-1 w-full bg-gray-200 rounded-full overflow-hidden my-2">
-          <div className="h-full w-full bg-blue-500 animate-progress" />
+          <div className="h-full w-full bg-gray-500 animate-progress" />
         </div>
       )}
 

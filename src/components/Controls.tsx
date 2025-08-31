@@ -97,7 +97,7 @@ function ControlsImpl({
         >
           {regions.map((r) => (
             <option key={r} value={r}>
-              {r}
+              {r === 'All' ? 'All Regions' : r}
             </option>
           ))}
         </select>
@@ -109,7 +109,9 @@ function ControlsImpl({
           className="w-full px-3 py-2 rounded-xl border shadow"
         >
           <option value="name">Sort: Name (A→Z)</option>
+          <option value="name_desc">Sort: Name (Z→A)</option>
           <option value="population">Sort: Population (desc)</option>
+          <option value="population_asc">Sort: Population (asc)</option>
         </select>
       </div>
     </section>

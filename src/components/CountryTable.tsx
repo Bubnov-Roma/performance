@@ -13,7 +13,7 @@ function CountryTableImpl({ data, selectedCols, highlightYear }: Props) {
   return (
     <div className="mt-3 max-h-72 overflow-auto rounded-xl border">
       <table className="w-full text-sm">
-        <thead className="sticky top-0 backdrop-blur-xl">
+        <thead className="sticky top-0 backdrop-blur-3xl">
           <tr>
             {headers.map((c) => (
               <th

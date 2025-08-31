@@ -1,13 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { CountryEntry, SortKey } from '../types';
+import type { CountryEntry } from '../types';
 import Worker from '../workers/filterWorker?worker';
 
 export function useDataWorker(
   all: CountryEntry[],
   search: string,
-  region: string,
-  sortBy: SortKey,
-  year: number
+  region: string
 ) {
   const [result, setResult] = useState<CountryEntry[]>(all);
   const [loading, setLoading] = useState(false);
@@ -25,15 +23,9 @@ export function useDataWorker(
   const runWorker = useCallback(() => {
     if (workerRef.current) {
       setLoading(true);
-      workerRef.current.postMessage({
-        countries: all,
-        search,
-        region,
-        sortBy,
-        year,
-      });
+      workerRef.current.postMessage({ countries: all, search, region });
     }
-  }, [all, search, region, sortBy, year]);
+  }, [all, search, region]);
 
   return { result, loading, runWorker };
 }
