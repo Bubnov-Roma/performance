@@ -1,5 +1,7 @@
 import { memo, useMemo } from 'react';
 import type { ColumnSpec, YearRow } from '../types';
+import { useVirtualList } from '../hooks/useVirtualList';
+import { CountryTableRow } from './CountryTableRow';
 
 interface Props {
   data: YearRow[];
@@ -7,13 +9,26 @@ interface Props {
   highlightYear: number;
 }
 
+const ROW_HEIGHT = 29;
+const VIEWPORT_HEIGHT = 300;
+
 function CountryTableImpl({ data, selectedCols, highlightYear }: Props) {
   const headers = useMemo(() => selectedCols, [selectedCols]);
 
+  const { visibleData, paddingTop, paddingBottom, onScroll } = useVirtualList(
+    data,
+    ROW_HEIGHT,
+    VIEWPORT_HEIGHT
+  );
+
   return (
-    <div className="mt-3 max-h-72 overflow-auto rounded-xl border">
-      <table className="w-full text-sm">
-        <thead className="sticky top-0 backdrop-blur-3xl">
+    <div
+      className="mt-3 overflow-auto rounded-xl border"
+      style={{ height: VIEWPORT_HEIGHT }}
+      onScroll={onScroll}
+    >
+      <table className="w-full text-sm border-collapse">
+        <thead className="sticky top-0 backdrop-blur-3xl z-10">
           <tr>
             {headers.map((c) => (
               <th
@@ -26,33 +41,31 @@ function CountryTableImpl({ data, selectedCols, highlightYear }: Props) {
           </tr>
         </thead>
         <tbody>
-          {data.map((row) => (
-            <tr
-              key={row.year}
-              className={row.year === highlightYear ? 'animate-flash' : ''}
-            >
-              {headers.map((c) => (
-                <td key={c.key} className="px-3 py-1 border-b tabular-nums">
-                  {formatCell(row, c.key)}
-                </td>
-              ))}
+          {paddingTop > 0 && (
+            <tr style={{ height: paddingTop }}>
+              <td colSpan={headers.length} />
             </tr>
+          )}
+
+          {visibleData.map((row) => (
+            <CountryTableRow
+              key={row.year}
+              row={row}
+              headers={headers}
+              highlightYear={highlightYear}
+              rowHeight={ROW_HEIGHT}
+            />
           ))}
+
+          {paddingBottom > 0 && (
+            <tr style={{ height: paddingBottom }}>
+              <td colSpan={headers.length} />
+            </tr>
+          )}
         </tbody>
       </table>
     </div>
   );
-}
-
-function formatCell(row: YearRow, key: string): string | number {
-  if (key === 'year') return row.year;
-  const v = row[key];
-  if (v === undefined || v === null || Number.isNaN(v)) return 'N/A';
-  if (typeof v === 'number') {
-    if (Math.abs(v) >= 1000) return Math.round(v).toLocaleString();
-    return Number(v.toFixed(3));
-  }
-  return String(v);
 }
 
 export const CountryTable = memo(CountryTableImpl);
