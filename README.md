@@ -6,8 +6,8 @@
 
 **Screenshots:**
 
-- ![Flame Graph] (./assets/Flame_Graph_before.jpg)
-- ![Ranked Chart] (./assets/Ranked_Chart_before.jpg)
+- ![Flame Graph](./assets/Flame_Graph_before.jpg)
+- ![Ranked Chart](./assets/Ranked_Chart_before.jpg)
 
 ---
 
@@ -25,5 +25,5 @@
 
 **Screenshots:**
 
-- ![Flame Graph] (./assets/Flame_Graph_after.jpg)
-- ![Ranked Chart] (./assets/Ranked_Chart_after.jpg)
+- ![Flame Graph](./assets/Flame_Graph_after.jpg)
+- ![Ranked Chart](./assets/Ranked_Chart_after.jpg)
