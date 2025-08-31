@@ -28,7 +28,7 @@ function CountryTableImpl({ data, selectedCols, highlightYear }: Props) {
       onScroll={onScroll}
     >
       <table className="w-full text-sm border-collapse">
-        <thead className="sticky top-0 backdrop-blur-3xl z-10">
+        <thead className="sticky top-0 backdrop-blur-3xl">
           <tr>
             {headers.map((c) => (
               <th
