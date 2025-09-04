@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useDeferredValue } from 'react';
 import type { ColumnSpec, YearRow } from '../types';
 import { useFormattedRow } from '../hooks/useFormattedRow';
 
@@ -9,14 +9,10 @@ interface Props {
   rowHeight: number;
 }
 
-function CountryTableRowImpl({
-  row,
-  headers,
-  highlightYear,
-  rowHeight,
-}: Props) {
+function CardTableRowImpl({ row, headers, highlightYear, rowHeight }: Props) {
   const formatted = useFormattedRow(row, headers);
-  const isHighlighted = row.year === highlightYear;
+  const deferredHighlight = useDeferredValue(highlightYear);
+  const isHighlighted = row.year === deferredHighlight;
 
   return (
     <tr
@@ -32,8 +28,10 @@ function CountryTableRowImpl({
   );
 }
 
-export const CountryTableRow = memo(
-  CountryTableRowImpl,
+export const CardTableRow = memo(
+  CardTableRowImpl,
   (prev, next) =>
-    prev.row === next.row && prev.highlightYear === next.highlightYear
+    prev.row === next.row &&
+    prev.highlightYear === next.highlightYear &&
+    prev.headers === next.headers
 );

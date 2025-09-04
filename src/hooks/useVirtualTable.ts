@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
 
-export function useVirtualList<T>(
+export function useVirtualTable<T>(
   data: T[],
   rowHeight: number,
   viewportHeight: number
@@ -15,13 +15,14 @@ export function useVirtualList<T>(
   const startIndex = Math.floor(scrollTop / rowHeight);
   const endIndex = Math.min(startIndex + visibleCount + 5, data.length);
 
-  const visibleData = useMemo(
-    () => data.slice(startIndex, endIndex),
-    [data, startIndex, endIndex]
+  const visibleIndexes = useMemo(
+    () =>
+      Array.from({ length: endIndex - startIndex }, (_, i) => startIndex + i),
+    [startIndex, endIndex]
   );
 
   const paddingTop = startIndex * rowHeight;
   const paddingBottom = (data.length - endIndex) * rowHeight;
 
-  return { visibleData, paddingTop, paddingBottom, onScroll };
+  return { visibleIndexes, paddingTop, paddingBottom, onScroll };
 }
