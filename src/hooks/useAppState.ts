@@ -1,8 +1,16 @@
-import { useMemo, useState } from 'react';
+import {
+  useMemo,
+  useState,
+  useDeferredValue,
+  useTransition,
+  useCallback,
+} from 'react';
 import type { ColumnSpec, CountryEntry, SortKey } from '../types';
 import { useDataWorker } from './useDataWorker';
+import { useVisibleCountries } from './useVisibleCountries';
+import { generateSortOptions } from '../utils/sortOptions';
 
-export interface AppState {
+interface AppState {
   search: string;
   setSearch: (v: string) => void;
   year: number;
@@ -21,6 +29,13 @@ export interface AppState {
   years: number[];
   loading: boolean;
   runWorker: () => void;
+  isPending: boolean;
+  yearOrderDesc: boolean;
+  onToggleYearOrder: () => void;
+  localOverrides: Record<string, boolean | undefined>;
+  toggleLocalOverride: (code: string) => void;
+  resetLocalOverrides: () => void;
+  sortOptions: { value: SortKey; label: string }[];
 }
 
 export function useAppState(all: CountryEntry[]): AppState {
@@ -37,19 +52,45 @@ export function useAppState(all: CountryEntry[]): AppState {
         }
       }
     }
-    return { minYear: min, maxYear: max, years: Array.from(yearSet).sort() };
+    return {
+      minYear: min,
+      maxYear: max,
+      years: Array.from(yearSet).sort((a, b) => b - a),
+    };
   }, [all]);
 
   const [search, setSearch] = useState('');
-  const [year, setYear] = useState<number>(maxYear);
-  const [sortBy, setSortBy] = useState<SortKey>('name');
-  const [regionsSelected, setRegionsSelected] = useState<string[]>(['All']);
-  const [selectedCols, setSelectedCols] = useState<ColumnSpec[]>([
+  const deferredSearch = useDeferredValue(search);
+
+  const [year, _setYear] = useState<number>(maxYear);
+  const [sortBy, _setSortBy] = useState<SortKey>('name_asc');
+  const [regionsSelected, _setRegionsSelected] = useState<string[]>(['All']);
+  const [yearOrderDesc, setYearOrderDesc] = useState(false);
+  const [selectedCols, _setSelectedCols] = useState<ColumnSpec[]>([
     { key: 'year', label: 'Year' },
     { key: 'population', label: 'Population' },
-    { key: 'co2', label: 'CO₂' },
-    { key: 'co2_per_capita', label: 'CO₂ per capita' },
+    { key: 'co2', label: 'co2' },
+    { key: 'co2_per_capita', label: 'co2_per_capita' },
   ]);
+
+  const [localOverrides, setLocalOverrides] = useState<
+    Record<string, boolean | undefined>
+  >({});
+  const [isPending, startTransition] = useTransition();
+
+  const setYear = (y: number) => startTransition(() => _setYear(y));
+  const setSortBy = (s: SortKey) => startTransition(() => _setSortBy(s));
+  const setRegionsSelected = (r: string[]) =>
+    startTransition(() => _setRegionsSelected(r));
+  const setSelectedCols = (cols: ColumnSpec[]) =>
+    startTransition(() => {
+      _setSelectedCols(cols);
+      const currentKey = sortBy.replace(/_(asc|desc)$/, '');
+      if (!cols.some((c) => c.key === currentKey)) {
+        const firstKey = cols[0]?.key || 'name';
+        _setSortBy(`${firstKey}_asc`);
+      }
+    });
 
   const regions = useMemo(() => {
     const s = new Set<string>(['All']);
@@ -60,47 +101,46 @@ export function useAppState(all: CountryEntry[]): AppState {
   }, [all]);
 
   const regionLabel = useMemo(() => {
-    if (regionsSelected.length === 0 || regionsSelected.includes('All')) {
-      const rest = regionsSelected.filter((r) => r !== 'All');
-      return rest.length ? `All + ${rest.join(' + ')}` : 'All Regions';
-    }
-    if (regionsSelected.length === 1) return regionsSelected[0];
-    if (regionsSelected.length === 2)
-      return `${regionsSelected[0]} + ${regionsSelected[1]}`;
-    return `${regionsSelected[0]} + ${regionsSelected[1]} + ${
-      regionsSelected.length - 2
-    } more`;
+    const rest = regionsSelected.filter((r) => r !== 'All');
+    return rest.length ? `${rest}` : 'Not Selected';
   }, [regionsSelected]);
 
   const {
     result: filteredCountries,
     loading,
     runWorker,
-  } = useDataWorker(all, search, regionsSelected);
+  } = useDataWorker(all, deferredSearch, regionsSelected);
 
-  const visibleCountries = useMemo(() => {
-    const arr = [...filteredCountries];
-    switch (sortBy) {
-      case 'name':
-        return arr.sort((a, b) => a.name.localeCompare(b.name));
-      case 'name_desc':
-        return arr.sort((a, b) => b.name.localeCompare(a.name));
-      case 'population':
-        return arr.sort(
-          (a, b) =>
-            (b.data.find((r) => r.year === year)?.population ?? 0) -
-            (a.data.find((r) => r.year === year)?.population ?? 0)
-        );
-      case 'population_asc':
-        return arr.sort(
-          (a, b) =>
-            (a.data.find((r) => r.year === year)?.population ?? 0) -
-            (b.data.find((r) => r.year === year)?.population ?? 0)
-        );
-      default:
-        return arr;
-    }
-  }, [filteredCountries, sortBy, year]);
+  const onToggleYearOrder = useCallback(() => {
+    startTransition(() => {
+      setYearOrderDesc((prev) => !prev);
+    });
+  }, [startTransition]);
+
+  const toggleLocalOverride = useCallback(
+    (code: string) => {
+      setLocalOverrides((prev) => ({
+        ...prev,
+        [code]: prev[code] === undefined ? !yearOrderDesc : !prev[code],
+      }));
+    },
+    [yearOrderDesc]
+  );
+
+  const resetLocalOverrides = useCallback(() => {
+    setLocalOverrides({});
+  }, []);
+
+  const sortOptions = useMemo(
+    () =>
+      generateSortOptions(selectedCols).map((o) => ({
+        value: `${o.key}_asc` as SortKey,
+        label: o.label,
+      })),
+    [selectedCols]
+  );
+
+  const visibleCountries = useVisibleCountries(filteredCountries, sortBy, year);
 
   return {
     search,
@@ -121,5 +161,12 @@ export function useAppState(all: CountryEntry[]): AppState {
     years,
     loading,
     runWorker,
+    isPending,
+    yearOrderDesc,
+    onToggleYearOrder,
+    localOverrides,
+    toggleLocalOverride,
+    resetLocalOverrides,
+    sortOptions,
   };
 }
