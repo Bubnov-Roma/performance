@@ -23,7 +23,13 @@ export interface CountryEntry {
   data: YearRow[];
 }
 
-export type SortKey = 'name' | 'name_desc' | 'population' | 'population_asc';
+export type SortKey =
+  | 'name'
+  | 'population'
+  | 'co2'
+  | 'co2_per_capita'
+  | `${string}_asc`
+  | `${string}_desc`;
 
 export interface ColumnSpec {
   key: string;
