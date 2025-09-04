@@ -6,9 +6,19 @@ interface Props {
   countries: CountryEntry[];
   selectedCols: ColumnSpec[];
   highlightYear: number;
+  yearOrderDesc: boolean;
+  localOverrides: Record<string, boolean | undefined>;
+  toggleLocalOverride: (code: string) => void;
 }
 
-function CountryListImpl({ countries, selectedCols, highlightYear }: Props) {
+function CountryListImpl({
+  countries,
+  selectedCols,
+  highlightYear,
+  yearOrderDesc,
+  localOverrides,
+  toggleLocalOverride,
+}: Props) {
   return (
     <section className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {countries.map((c) => (
@@ -17,6 +27,9 @@ function CountryListImpl({ countries, selectedCols, highlightYear }: Props) {
           country={c}
           selectedCols={selectedCols}
           highlightYear={highlightYear}
+          yearOrderDesc={localOverrides[c.code] ?? yearOrderDesc}
+          isLocallyOverridden={localOverrides[c.code] !== undefined}
+          onToggleLocalYearOrder={() => toggleLocalOverride(c.code)}
         />
       ))}
     </section>
