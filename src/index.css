@@ -12,29 +12,18 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
+  --border-hover: #858585;
   --muted: #6b7280;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --border-hover: #929292;
+  }
 }
 
 #root {
   width: 100%;
-}
-
-a {
-  font-weight: 500;
-  text-decoration: inherit;
-}
-
-a:hover {
-  border-color: #bcbcbc;
-}
-
-label {
-  cursor: pointer;
-  border: 1px solid transparent;
-}
-
-label:hover {
-  border-color: inherit;
 }
 
 body {
@@ -45,9 +34,16 @@ body {
   min-height: 100vh;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+a {
+  font-weight: 500;
+  text-decoration: inherit;
+  transition: border-color 0.25s ease;
+}
+
+label {
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: border-color 0.25s ease;
 }
 
 button {
@@ -59,16 +55,12 @@ button {
   font-family: inherit;
   border-color: inherit;
   cursor: pointer;
-  transition: border-color 0.25s;
+  transition: border-color 0.25s ease;
 }
 
-button:hover {
-  border-color: #8e8e8e;
-}
-
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
 }
 
 @keyframes progress {
@@ -79,6 +71,12 @@ button:focus-visible {
   100% {
     transform: translateX(0%);
   }
+}
+
+a:hover,
+label:hover,
+button:hover {
+  border-color: var(--border-hover);
 }
 
 .animate-progress {
