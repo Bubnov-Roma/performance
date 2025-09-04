@@ -1,31 +1,33 @@
-import { memo, useMemo, useEffect, useState } from 'react';
-import type { ColumnSpec, CountryEntry, YearRow } from '../types';
-import { CountryTable } from './CountryTable';
+import { memo, useMemo, useDeferredValue } from 'react';
+import type { ColumnSpec, CountryEntry } from '../types';
+import { CardTable } from './CardTable';
 
 interface Props {
   country: CountryEntry;
   selectedCols: ColumnSpec[];
   highlightYear: number;
+  yearOrderDesc: boolean;
+  isLocallyOverridden: boolean;
+  onToggleLocalYearOrder: () => void;
 }
 
-function CountryCardImpl({ country, selectedCols, highlightYear }: Props) {
-  const latestRow = useMemo<YearRow | undefined>(
-    () => country.data.find((r) => r.year === highlightYear),
-    [country.data, highlightYear]
+function CountryCardImpl({
+  country,
+  selectedCols,
+  highlightYear,
+  yearOrderDesc,
+  isLocallyOverridden,
+  onToggleLocalYearOrder,
+}: Props) {
+  const deferredHighlight = useDeferredValue(highlightYear);
+
+  const latestRow = useMemo(
+    () => country.data.find((r) => r.year === deferredHighlight),
+    [country.data, deferredHighlight]
   );
 
-  const [flash, setFlash] = useState(false);
-
-  useEffect(() => {
-    if (latestRow) {
-      setFlash(true);
-      const timeout = setTimeout(() => setFlash(false), 1000);
-      return () => clearTimeout(timeout);
-    }
-  }, [latestRow]);
-
   return (
-    <article className="bg-[var(--card)] rounded-2xl border shadow p-4">
+    <article className="bg-[var(--card)] rounded-2xl border shadow p-4 max-w-full overflow-hidden">
       <header className="flex items-baseline justify-between gap-2">
         <h2 className="font-semibold text-lg truncate" title={country.name}>
           {country.name}
@@ -37,22 +39,27 @@ function CountryCardImpl({ country, selectedCols, highlightYear }: Props) {
       <dl className="mt-1 grid grid-cols-3 gap-2 text-sm">
         <div className="col-span-2">
           <dt className="text-[var(--muted)]">Population</dt>
-          <dd className={`tabular-nums ${flash ? 'animate-flash' : ''}`}>
+          <dd className={`tabular-nums ${latestRow ? 'animate-flash' : ''}`}>
             {latestRow?.population ?? 'N/A'}
           </dd>
         </div>
         <div>
           <dt className="text-[var(--muted)]">Year</dt>
-          <dd className={`tabular-nums ${flash ? 'animate-flash' : ''}`}>
+          <dd className={`tabular-nums ${latestRow ? 'animate-flash' : ''}`}>
             {latestRow?.year ?? '—'}
           </dd>
         </div>
       </dl>
-      <CountryTable
-        data={country.data}
-        selectedCols={selectedCols}
-        highlightYear={highlightYear}
-      />
+      <div className="mt-3 overflow-x-auto">
+        <CardTable
+          data={country.data}
+          selectedCols={selectedCols}
+          highlightYear={highlightYear}
+          yearOrderDesc={yearOrderDesc}
+          isLocallyOverridden={isLocallyOverridden}
+          onToggleLocalYearOrder={onToggleLocalYearOrder}
+        />
+      </div>
     </article>
   );
 }
