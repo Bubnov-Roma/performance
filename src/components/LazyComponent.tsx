@@ -5,14 +5,20 @@ import type { ColumnSpec } from '../types';
 import { CountryList } from '../components/CountryList';
 import { ColumnSelectorModal } from '../components/ColumnSelectorModal';
 import { Controls } from '../components/Controls';
+import { Loader } from './Loader';
+import { AboutModal } from './AboutModal';
 
 function LazyComponentImpl() {
   const allCountries = useCountries();
   const app = useAppState(allCountries);
 
   const [columnsOpen, setColumnsOpen] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState(false);
+
   const openColumns = useCallback(() => setColumnsOpen(true), []);
   const closeColumns = useCallback(() => setColumnsOpen(false), []);
+  const openAbout = useCallback(() => setAboutOpen(true), []);
+  const closeAbout = useCallback(() => setAboutOpen(false), []);
 
   const availableColumns = useMemo<ColumnSpec[]>(() => {
     const keys = new Set<string>();
@@ -37,9 +43,20 @@ function LazyComponentImpl() {
     (key: string) => {
       const exists = app.selectedCols.some((c) => c.key === key);
       if (exists) {
-        app.setSelectedCols(app.selectedCols.filter((c) => c.key !== key));
+        const newCols = app.selectedCols.filter((c) => c.key !== key);
+        app.setSelectedCols(newCols);
+        if (app.sortBy.replace(/_(asc|desc)$/, '') === key) {
+          const firstKey = newCols[0]?.key || 'name';
+          app.setSortBy(`${firstKey}_asc`);
+        }
       } else {
-        app.setSelectedCols([...app.selectedCols, { key, label: key }]);
+        const newCols = [...app.selectedCols, { key, label: key }];
+        app.setSelectedCols(newCols);
+        if (
+          !newCols.some((c) => c.key === app.sortBy.replace(/_(asc|desc)$/, ''))
+        ) {
+          app.setSortBy(`${key}_asc`);
+        }
       }
     },
     [app]
@@ -58,19 +75,29 @@ function LazyComponentImpl() {
         </div>
         <div className="flex gap-2">
           <button
+            onClick={app.onToggleYearOrder}
+            className="px-3 py-2 rounded-xl border shadow"
+          >
+            {app.yearOrderDesc ? 'Years in Cards ↓' : 'Years in Cards ↑'}
+          </button>
+          <button
+            onClick={app.resetLocalOverrides}
+            className="px-3 py-2 rounded-xl border shadow"
+          >
+            Reset All Cards
+          </button>
+          <button
             onClick={openColumns}
             className="px-3 py-2 rounded-xl border shadow hover:bg-gray-70"
           >
             Select Columns
           </button>
-          <a
-            className="px-3 py-2 rounded-xl border  shadow hover:bg-gray-70"
-            href="https://github.com/owid/co2-data"
-            target="_blank"
-            rel="noreferrer"
+          <button
+            onClick={openAbout}
+            className="px-3 py-2 rounded-xl border shadow hover:bg-gray-70"
           >
-            Data Source
-          </a>
+            About Project
+          </button>
         </div>
       </header>
 
@@ -87,18 +114,18 @@ function LazyComponentImpl() {
         regionsSelected={app.regionsSelected}
         onRegionsChange={app.setRegionsSelected}
         regionLabel={app.regionLabel}
+        selectedCols={app.selectedCols}
       />
 
-      {app.loading && (
-        <div className="h-1 w-full bg-gray-200 rounded-full overflow-hidden my-2">
-          <div className="h-full w-full bg-gray-500 animate-progress" />
-        </div>
-      )}
+      <Loader loading={app.loading} pending={app.isPending} />
 
       <CountryList
         countries={app.visibleCountries}
         selectedCols={app.selectedCols}
         highlightYear={app.year}
+        yearOrderDesc={app.yearOrderDesc}
+        localOverrides={app.localOverrides}
+        toggleLocalOverride={app.toggleLocalOverride}
       />
 
       <ColumnSelectorModal
@@ -108,6 +135,8 @@ function LazyComponentImpl() {
         selected={app.selectedCols}
         onToggleKey={onToggleColumn}
       />
+
+      <AboutModal open={aboutOpen} onClose={closeAbout} />
     </div>
   );
 }
